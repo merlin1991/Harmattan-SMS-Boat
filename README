@@ -13,6 +13,7 @@ Building/Installing
 ===================
 
 The n9 exporter must be built inside a harmattan scratchbox.
+Also libcommhistory-dev must be installed inside scratchbox.
 
 cd n9Export
 qmake
