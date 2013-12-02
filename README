@@ -1,0 +1,25 @@
+Harmattan SMS Boat
+==================
+
+An exporter for SMS from Harmattan to a semi CSV structure
+
+The resulting CSV is printed to STDOUT in the format:
+PhoneNumber;IN/OUT;StartTime;EndTime;SMSText
+
+If the SMSText contains newlines a space is added after the newline
+--> lines starting with a space are a continuation of the last sms text.
+
+Building/Installing
+===================
+
+The n9 exporter must be built inside a harmattan scratchbox.
+
+cd n9Export
+qmake
+make
+
+
+TODO
+====
+
+Sailfish Importer
