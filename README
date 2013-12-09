@@ -24,10 +24,10 @@ The Sailfish import must be built inside the sailfish mer-sdk.
 Building requires libcommhistory-qt5-devel available in the target.
 
 Installing the library:
-cd /srv/mer/targets/SailfishOS-i486-x86
-sb2 -t SailfishOS-i486-x86 -m sdk-install -R zypper in libcommhistory-qt5-devel
+cd /srv/mer/targets/SailfishOS-armv7hl
+sb2 -t SailfishOS-armv7hl -m sdk-install -R zypper in libcommhistory-qt5-devel
 
 Building the importer:
 cd jollaImport
-sb2 -t SailfishOS-i486-x86 qmake
-sb2 -t SailfishOS-i486-x86 make
+sb2 -t SailfishOS-armv7hl qmake
+sb2 -t SailfishOS-armv7hl make
