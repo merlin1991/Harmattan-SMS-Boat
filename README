@@ -13,14 +13,21 @@ Building/Installing
 ===================
 
 The n9 exporter must be built inside a harmattan scratchbox.
-Also libcommhistory-dev must be installed inside scratchbox.
+Building requires libcommhistory-dev.
 
 cd n9Export
 qmake
 make
 
 
-TODO
-====
+The Sailfish import must be built inside the sailfish mer-sdk.
+Building requires libcommhistory-qt5-devel available in the target.
 
-Sailfish Importer
+Installing the library:
+cd /srv/mer/targets/SailfishOS-i486-x86
+sb2 -t SailfishOS-i486-x86 -m sdk-install -R zypper in libcommhistory-qt5-devel
+
+Building the importer:
+cd jollaImport
+sb2 -t SailfishOS-i486-x86 qmake
+make
