@@ -18,7 +18,7 @@ int main(int argc, char** argv)
     if(!smsModel.getEvents())
     {
         qCritical() << "Error fetching events";
-        return -1;
+        return EXIT_FAILURE;
     }
 
     int i;
@@ -43,5 +43,5 @@ int main(int argc, char** argv)
         }
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }
