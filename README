@@ -30,4 +30,4 @@ sb2 -t SailfishOS-i486-x86 -m sdk-install -R zypper in libcommhistory-qt5-devel
 Building the importer:
 cd jollaImport
 sb2 -t SailfishOS-i486-x86 qmake
-make
+sb2 -t SailfishOS-i486-x86 make
