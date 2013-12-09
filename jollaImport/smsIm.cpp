@@ -19,10 +19,10 @@
 
 using namespace CommHistory;
 
-static GroupModel groupModel;
-Catcher groupCatcher(&groupModel);
-static EventModel eventModel;
-Catcher eventCatcher(&eventModel);
+static GroupModel* groupModel;
+static Catcher* groupCatcher;
+static EventModel* eventModel;
+static Catcher* eventCatcher;
 
 void addContact(QHash<QString, int>* list, QString number)
 {
@@ -30,14 +30,14 @@ void addContact(QHash<QString, int>* list, QString number)
     group.setLocalUid(RING_ACCOUNT);
     group.setRemoteUids(QStringList() << number);
     group.setChatType(Group::ChatTypeP2P);
-    groupCatcher.reset();
-    if(!groupModel.addGroup(group))
+    groupCatcher->reset();
+    if(!groupModel->addGroup(group))
     {
         qWarning() << "could not add group for" << number;
         return;
     }
 
-    groupCatcher.waitCommit();
+    groupCatcher->waitCommit();
     list->insert(number, group.id());
 }
 
@@ -69,14 +69,14 @@ void workMessage(QString* message)
     event.setIsRead(true);
     event.setFreeText(message->section(';', 4));
 
-    eventCatcher.reset();
-    if(!eventModel.addEvent(event))
+    eventCatcher->reset();
+    if(!eventModel->addEvent(event))
     {
         qWarning() << "could not add message " << message;
         return;
     }
 
-    eventCatcher.waitCommit();
+    eventCatcher->waitCommit();
     qDebug() << "message from/for" << tokens.at(0) << "added";
 }
 
@@ -108,8 +108,13 @@ int main(int argc, char** argv)
     QString lineBuffer;
     QString csvLine;
 
-    groupModel.enableContactChanges(false);
-    groupModel.setQueryMode(EventModel::SyncQuery);
+    groupModel = new GroupModel(&app);
+    groupCatcher = new Catcher(groupModel);
+    groupModel->enableContactChanges(false);
+    groupModel->setQueryMode(EventModel::SyncQuery);
+
+    eventModel = new EventModel(&app);
+    eventCatcher = new Catcher(eventModel);
 
     while(!csvStream.atEnd())
     {
