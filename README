@@ -9,6 +9,15 @@ PhoneNumber;IN/OUT;StartTime;EndTime;SMSText
 If the SMSText contains newlines a space is added after the newline
 --> lines starting with a space are a continuation of the last sms text.
 
+The times(dates) are formatted with Qt::ISODate, excerpt from the Qt 5 docs:
+ISO 8601 extended format: either YYYY-MM-DD for dates or YYYY-MM-DDTHH:MM:SS, YYYY-MM-DDTHH:MM:SSTZD
+(e.g., 1997-07-16T19:20:30+01:00) for combined dates and times.
+
+Sample csv:
++xxxxxxxxx;IN;2013-11-29T08:07:09Z;2013-11-29T08:07:49Z;Your jolla dev kit is on it's way!
+ Should be there by tomorrow
++xxxxxxxxx;OUT;2013-11-29T07:11:42Z;2013-11-29T07:11:40Z;Thanks m8
+
 Building/Installing
 ===================
 
