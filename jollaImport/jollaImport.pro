@@ -1,7 +1,7 @@
 QT -= gui
 CONFIG += debug
 HEADERS += catcher.h
-SOURCES += smsIm.cpp
+SOURCES += jollaIm.cpp
 
 #libcommhistory
 CONFIG += link_pkgconfig

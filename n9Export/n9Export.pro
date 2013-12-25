@@ -1,5 +1,5 @@
 CONFIG += qt debug
-SOURCES += smsEx.cpp
+SOURCES += n9Ex.cpp
 
 #libcommhistory
 CONFIG += link_pkgconfig

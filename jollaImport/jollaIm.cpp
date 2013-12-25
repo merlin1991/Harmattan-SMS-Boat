@@ -24,17 +24,25 @@ static Catcher* groupCatcher;
 static EventModel* eventModel;
 static Catcher* eventCatcher;
 
+enum ImportMode {
+    SMS,
+    CALLS
+};
+
 struct RuntimeSettings {
     QString file;
+    enum ImportMode mode;
 };
 
 static char doc[] =
-    "smsImport -- imports sms via libcommhistory from a csv like FILE";
+    "jollaImport -- imports sms/calls via libcommhistory from a csv like FILE";
 
 static char args_doc[] = "FILE";
 
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 static struct argp_option options[] = {
+    { "calls", 'c', 0, 0, "import calls"},
+    { "sms", 's', 0, 0, "import sms (default)" },
     { 0 }
 };
 #pragma GCC diagnostic pop
@@ -45,6 +53,12 @@ static error_t parse_opt(int key, char* arg, struct argp_state* state)
    
     switch(key)
     {
+        case 'c':
+            conf->mode = CALLS;
+            break;
+        case 's':
+            conf->mode = SMS;
+            break;
         case ARGP_KEY_ARG:
             if (state->arg_num >= 1)
                 /* Too many arguments. */
@@ -124,31 +138,52 @@ void workMessage(QString* message)
     qDebug() << "message from/for" << tokens.at(0) << "added";
 }
 
-int main(int argc, char** argv) 
+void workCall(QString *call)
 {
-    struct RuntimeSettings conf;
-
-    if(argp_parse(&arg_parser, argc, argv, 0, 0, &conf))
+    QStringList tokens = call->split(';');
+    if(tokens.size() < 5)
     {
-        qCritical() << "argument parsing error";
-        return EXIT_FAILURE;
+        qDebug() << "invalid call:" << qPrintable(*call);
+        return;
     }
+    Event event;
+    event.setType(Event::CallEvent);
+    event.setGroupId(-1);
+    event.setLocalUid(RING_ACCOUNT);
+    event.setRemoteUid(tokens.at(0));
+    event.setDirection(tokens.at(1) == "IN" ? Event::Inbound : Event::Outbound);
+    event.setStatus(Event::UnknownStatus);
+    event.setIsMissedCall(tokens.at(2) == "OK" ? false : true);
+
+    QDateTime date = QDateTime::fromString(tokens.at(3), Qt::ISODate);
+    QDateTime endDate = QDateTime::fromString(tokens.at(4), Qt::ISODate);
+    event.setStartTime(date);
+    event.setEndTime(endDate);
     
+    eventCatcher->reset();
+    if(!eventModel->addEvent(event))
+    {
+        qWarning() << "could not add call " << call;
+        return;
+    }
 
-    QCoreApplication app(argc, argv);
+    eventCatcher->waitCommit();
+    qDebug() << "call from/to" << tokens.at(0) << "added";
+}
 
-    QStringList args = app.arguments();
-    QFile csvFile(conf.file);
+int runImport(struct RuntimeSettings *conf)
+{
+    QFile csvFile(conf->file);
     if(!csvFile.exists())
     {
-        qCritical() << conf.file << "does not exist";
-        return EXIT_FAILURE;
+        qCritical() << conf->file << "does not exist";
+        return 0;
     }
 
     if(!csvFile.open(QFile::ReadOnly))
     {
-        qCritical() << conf.file << "could not be opened";
-        return EXIT_FAILURE;
+        qCritical() << conf->file << "could not be opened";
+        return 0;
     }
 
     QTextStream csvStream(&csvFile);
@@ -156,17 +191,25 @@ int main(int argc, char** argv)
     QString lineBuffer;
     QString csvLine;
 
-    groupModel = new GroupModel(&app);
-    groupCatcher = new Catcher(groupModel);
-    groupModel->enableContactChanges(false);
-    groupModel->setQueryMode(EventModel::SyncQuery);
+    if(conf->mode == SMS)
+    {
+        groupModel = new GroupModel();
+        groupCatcher = new Catcher(groupModel);
+        groupModel->enableContactChanges(false);
+        groupModel->setQueryMode(EventModel::SyncQuery);
+    }
 
-    eventModel = new EventModel(&app);
+    eventModel = new EventModel();
     eventCatcher = new Catcher(eventModel);
 
     while(!csvStream.atEnd())
     {
         csvLine = csvStream.readLine();
+        if(conf->mode == CALLS)
+        {
+            workCall(&csvLine);
+            continue;
+        }
         if(csvLine.startsWith(' '))
         {
             lineBuffer = lineBuffer % "\n" % csvLine.mid(1);
@@ -175,7 +218,46 @@ int main(int argc, char** argv)
         workMessage(&lineBuffer);
         lineBuffer = csvLine;
     }
-    workMessage(&lineBuffer);
+
+    if(conf->mode == SMS)
+    {
+        workMessage(&lineBuffer);
+
+        delete groupCatcher;
+        delete groupModel;
+    }
+
+    delete eventCatcher;
+    delete eventModel;
     
-    return EXIT_SUCCESS;
+    return 1;
+}
+
+int main(int argc, char** argv) 
+{
+    struct RuntimeSettings conf;
+    conf.mode = SMS;
+
+    if(argp_parse(&arg_parser, argc, argv, 0, 0, &conf))
+    {
+        qCritical() << "argument parsing error";
+        return EXIT_FAILURE;
+    }
+
+    QCoreApplication app(argc, argv);
+
+    switch(conf.mode)
+    {
+        case SMS:
+        case CALLS:
+            if(runImport(&conf))
+            {
+                return EXIT_SUCCESS;
+            }
+        default:
+            qCritical() << "invalid import mode";
+            break;
+    }
+
+    return EXIT_FAILURE;
 }
