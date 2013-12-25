@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include <QtCore>
 #include <QDebug>
 #include <CommHistory/SyncSMSModel>
@@ -10,6 +8,24 @@ using namespace CommHistory;
 int main(int argc, char** argv) 
 {
     QCoreApplication app(argc, argv);
+    QStringList args = app.arguments();
+
+    if(args.size() != 2)
+    {
+        qCritical() << "no filename to write into was given";
+        return EXIT_FAILURE;
+    }
+
+    QFile outputFile(args.at(1));
+
+    if(!outputFile.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        qCritical() << "could not open" << args.at(1) << "for writing";
+        return EXIT_FAILURE;
+    }
+
+    QTextStream outputStream(&outputFile);
+    outputStream.setCodec("utf-8");
 
     SyncSMSModel smsModel(ALL);
 
@@ -34,14 +50,18 @@ int main(int argc, char** argv)
         }
         else
         {
-            std::string direction = e.direction() == Event::Inbound ? "IN" : "OUT";
-            std::cout << qPrintable(e.remoteUid()) << ";" <<
+
+            QString direction = e.direction() == Event::Inbound ? "IN" : "OUT";
+            outputStream << e.remoteUid() << ";" <<
                 direction << ";" << 
-                qPrintable(e.startTime().toString(Qt::ISODate)) << ";" <<
-                qPrintable(e.endTime().toString(Qt::ISODate)) << ";" <<
-                qPrintable(e.freeText().replace('\n', "\n ")) << std::endl;
+                e.startTime().toString(Qt::ISODate) << ";" <<
+                e.endTime().toString(Qt::ISODate) << ";" <<
+                e.freeText().replace('\n', "\n ") << endl;
         }
     }
+
+    outputStream.flush();
+    outputFile.close();
 
     return EXIT_SUCCESS;
 }

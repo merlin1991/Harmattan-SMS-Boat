@@ -105,6 +105,7 @@ int main(int argc, char** argv)
     }
 
     QTextStream csvStream(&csvFile);
+    csvStream.setCodec("utf-8");
     QString lineBuffer;
     QString csvLine;
 
