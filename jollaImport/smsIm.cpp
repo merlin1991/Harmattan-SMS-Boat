@@ -1,4 +1,4 @@
-#include <iostream>
+#include <argp.h>
 
 #include <QtCore>
 #include <QString>
@@ -23,6 +23,50 @@ static GroupModel* groupModel;
 static Catcher* groupCatcher;
 static EventModel* eventModel;
 static Catcher* eventCatcher;
+
+struct RuntimeSettings {
+    QString file;
+};
+
+static char doc[] =
+    "smsImport -- imports sms via libcommhistory from a csv like FILE";
+
+static char args_doc[] = "FILE";
+
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+static struct argp_option options[] = {
+    { 0 }
+};
+#pragma GCC diagnostic pop
+
+static error_t parse_opt(int key, char* arg, struct argp_state* state)
+{
+    struct RuntimeSettings *conf = (struct RuntimeSettings*)state->input;
+   
+    switch(key)
+    {
+        case ARGP_KEY_ARG:
+            if (state->arg_num >= 1)
+                /* Too many arguments. */
+                argp_usage (state);
+            conf->file = QString::fromLocal8Bit(arg);
+            break;
+     
+         case ARGP_KEY_END:
+            if (state->arg_num < 1)
+                /* Not enough arguments. */
+                argp_usage (state);
+            break;
+        default:
+            return ARGP_ERR_UNKNOWN;
+    }
+
+    return 0;
+}
+
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+static struct argp arg_parser = {options, parse_opt, args_doc, doc};
+#pragma GCC diagnostic pop
 
 void addContact(QHash<QString, int>* list, QString number)
 {
@@ -82,25 +126,28 @@ void workMessage(QString* message)
 
 int main(int argc, char** argv) 
 {
+    struct RuntimeSettings conf;
+
+    if(argp_parse(&arg_parser, argc, argv, 0, 0, &conf))
+    {
+        qCritical() << "argument parsing error";
+        return EXIT_FAILURE;
+    }
+    
+
     QCoreApplication app(argc, argv);
 
     QStringList args = app.arguments();
-    if(args.size() != 2)
-    {
-        qCritical() << "No file given";
-        return EXIT_FAILURE;
-    }
-
-    QFile csvFile(args.at(1));
+    QFile csvFile(conf.file);
     if(!csvFile.exists())
     {
-        qCritical() << args.at(1) << "does not exist";
+        qCritical() << conf.file << "does not exist";
         return EXIT_FAILURE;
     }
 
     if(!csvFile.open(QFile::ReadOnly))
     {
-        qCritical() << args.at(1) << "could not be opened";
+        qCritical() << conf.file << "could not be opened";
         return EXIT_FAILURE;
     }
 
