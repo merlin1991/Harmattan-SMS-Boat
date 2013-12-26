@@ -3,7 +3,7 @@ Harmattan SMS Boat
 
 An exporter for SMS/Calls from Harmattan to a semi CSV structure
 
-The resulting CSV is written to faile encoded as utf-8 in the format:
+The resulting CSV is written to a file encoded as utf-8 in the format:
 PhoneNumber;IN/OUT;StartTime;EndTime;SMSText
 
 Calls have a similar format:
