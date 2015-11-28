@@ -50,7 +50,7 @@ static struct argp_option options[] = {
 static error_t parse_opt(int key, char* arg, struct argp_state* state)
 {
     struct RuntimeSettings *conf = (struct RuntimeSettings*)state->input;
-   
+
     switch(key)
     {
         case 'c':
@@ -65,7 +65,7 @@ static error_t parse_opt(int key, char* arg, struct argp_state* state)
                 argp_usage (state);
             conf->file = QString::fromLocal8Bit(arg);
             break;
-     
+
          case ARGP_KEY_END:
             if (state->arg_num < 1)
                 /* Not enough arguments. */
@@ -86,7 +86,7 @@ void addContact(QHash<QString, int>* list, QString number)
 {
     Group group;
     group.setLocalUid(RING_ACCOUNT);
-    group.setRemoteUids(QStringList() << number);
+    group.setRecipients(RecipientList::fromUids(RING_ACCOUNT, QStringList() << number));
     group.setChatType(Group::ChatTypeP2P);
     groupCatcher->reset();
     if(!groupModel->addGroup(group))
@@ -111,12 +111,12 @@ void workMessage(QString* message)
     }
     if(!contactList.contains(tokens.at(0)))
         addContact(&contactList, tokens.at(0));
-    
+
     Event event;
     event.setType(Event::SMSEvent);
     event.setGroupId(contactList.value(tokens.at(0)));
     event.setLocalUid(RING_ACCOUNT);
-    event.setRemoteUid(tokens.at(0));
+    event.setRecipients(RecipientList::fromUids(RING_ACCOUNT, tokens));
     event.setDirection(tokens.at(1) == "IN" ? Event::Inbound : Event::Outbound);
     event.setStatus(Event::DeliveredStatus);
 
@@ -150,7 +150,7 @@ void workCall(QString *call)
     event.setType(Event::CallEvent);
     event.setGroupId(-1);
     event.setLocalUid(RING_ACCOUNT);
-    event.setRemoteUid(tokens.at(0));
+    event.setRecipients(RecipientList::fromUids(RING_ACCOUNT, tokens));
     event.setDirection(tokens.at(1) == "IN" ? Event::Inbound : Event::Outbound);
     event.setStatus(Event::UnknownStatus);
     event.setIsMissedCall(tokens.at(2) == "OK" ? false : true);
@@ -159,7 +159,7 @@ void workCall(QString *call)
     QDateTime endDate = QDateTime::fromString(tokens.at(4), Qt::ISODate);
     event.setStartTime(date);
     event.setEndTime(endDate);
-    
+
     eventCatcher->reset();
     if(!eventModel->addEvent(event))
     {
@@ -195,7 +195,6 @@ int runImport(struct RuntimeSettings *conf)
     {
         groupModel = new GroupModel();
         groupCatcher = new Catcher(groupModel);
-        groupModel->enableContactChanges(false);
         groupModel->setQueryMode(EventModel::SyncQuery);
     }
 
@@ -229,7 +228,7 @@ int runImport(struct RuntimeSettings *conf)
 
     delete eventCatcher;
     delete eventModel;
-    
+
     return 1;
 }
 

@@ -43,3 +43,33 @@ Building the importer:
 cd jollaImport
 sb2 -t SailfishOS-armv7hl qmake
 sb2 -t SailfishOS-armv7hl make
+
+Building the importer in the SDK
+--------------------------------
+These steps are tested with SailfishOS release 2.0.0.10 and an SDK version
+that did not match the phone's one.
+
+* In the SDK VM, check if it's release version matches your phone's.
+
+  $ sb2 -t SailfishOS-armv7hl -m sdk-instll -R ssu status
+
+  If it is a lower release, set the correct release version and update the packages.
+
+  $ sb2 -t SailfishOS-armv7hl -m sdk-install -R ssu re 2.0.0.10
+  $ sb2 -t SailfishOS-armv7hl -m sdk-install -R ssu updaterepos
+  $ sb2 -t SailfishOS-armv7hl -m sdk-install -R ssu zypper update
+
+* Missing packages can also be installed with zypper, e.g.
+
+  $ sb2 -t SailfishOS-armv7hl -m sdk-install -R zypper install libcommhistory-qt5-devel
+
+* If unsure, or problems occur, make sure, the verison of
+  libcommhistory on your phone and the one in the SDK match:
+
+  SSH into the phone:
+
+  $ pkcon get-details libcommhistory-qt5
+
+  SSH into the SDK VM
+
+  $ sb2 -t SailfishOS-armv7hl -m sdk-install -R ssu zypper info libcommhistory-qt5-devel
